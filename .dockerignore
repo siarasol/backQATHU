@@ -1,0 +1,5 @@
+target/*.war
+**/target/
+.git
+.gitignore
+*.md
