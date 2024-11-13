@@ -13,7 +13,7 @@
     <groupId>org.example</groupId>
     <artifactId>backendfi2</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
 
     <name>backendfi2</name>
     <description>backendfi2</description>
@@ -111,6 +111,7 @@
     </dependencies>
 
     <build>
+        <finalName>backendfi2</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
