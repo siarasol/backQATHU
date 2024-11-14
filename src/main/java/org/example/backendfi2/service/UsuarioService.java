@@ -63,6 +63,11 @@ public class UsuarioService {
         }
     }
 
+
+
+
+
+
     private void enviarCorreoBienvenida(Usuario usuario) {
         String asunto = "Bienvenido a QHATU BOLIVIA";
         String cuerpo = """
