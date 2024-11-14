@@ -1,6 +1,6 @@
 package org.example.backendfi2.service;
 
-
+import org.example.backendfi2.service.CloudinaryService;
 import org.example.backendfi2.model.Archivos;
 import org.example.backendfi2.model.ArchivoProducto;
 import org.example.backendfi2.model.Categoria;
@@ -45,7 +45,12 @@ public class ProductoService {
     @Autowired
     private ArchivoProductoRepository archivoProductoRepository;
 
+    private final CloudinaryService cloudinaryService;
 
+    @Autowired
+    public ProductoService(CloudinaryService cloudinaryService) {
+        this.cloudinaryService = cloudinaryService;
+    }
 
 
 
@@ -63,7 +68,6 @@ public class ProductoService {
             producto.setCreatedAt(LocalDateTime.now());
 
             // Guardar el producto
-
             Producto productoGuardado = productoRepository.save(producto);
 
             // Formato de fecha y hora para el nombre del archivo
@@ -71,27 +75,16 @@ public class ProductoService {
 
             // Guardar las imágenes asociadas al producto
             for (MultipartFile archivo : archivos) {
-                // Obtener la extensión del archivo
-                String fileExtension = archivo.getOriginalFilename() != null ?
-                        archivo.getOriginalFilename().substring(archivo.getOriginalFilename().lastIndexOf(".")) : "";
+                // Subir el archivo a Cloudinary y obtener la URL pública
+                String imageUrl = cloudinaryService.uploadImage(archivo); // Asegúrate de tener este método en CloudinaryService
 
-                // Generar el nuevo nombre del archivo con fecha y hora
-                String fileName = System.currentTimeMillis() + "_" + dateTimeFormatter.format(LocalDateTime.now()) + fileExtension;
-
-                // Generar la ruta completa del archivo
-                String filePath = STORAGE_PATH + fileName;
-                Path path = Paths.get(filePath);
-
-                // Guardar el archivo físicamente
-                Files.write(path, archivo.getBytes());
-
-                // Crear un nuevo objeto Archivo y setear la ruta
+                // Crear un nuevo objeto Archivos y setear la URL pública en lugar de la ruta física
                 Archivos archivoGuardado = new Archivos();
                 archivoGuardado.setActive(true);
                 archivoGuardado.setCreatedBy(producto.getCreatedBy());
                 archivoGuardado.setCreatedAt(LocalDateTime.now());
-                archivoGuardado.setNombre(fileName);
-                archivoGuardado.setPath(filePath);
+                archivoGuardado.setNombre(archivo.getOriginalFilename());
+                archivoGuardado.setPath(imageUrl); // Guardar la URL pública en el campo `path`
                 archivoGuardado.setTipoArchivo(archivo.getContentType());
                 archivoRepository.save(archivoGuardado);
 
@@ -107,7 +100,7 @@ public class ProductoService {
             return productoGuardado;
 
         } catch (IOException e) {
-            throw new IOException("Error al guardar el archivo", e);
+            throw new IOException("Error al subir el archivo a Cloudinary", e);
         } catch (Exception e) {
             throw new RuntimeException("Error al crear el producto", e);
         }
@@ -122,18 +115,16 @@ public class ProductoService {
             if (productoOpt.isPresent()) {
                 Producto producto = productoOpt.get();
 
-                // Convertir las imágenes asociadas en ArchivoProductoDTO con URL accesible
+                // Convertir las imágenes asociadas en ArchivoProductoDTO usando la URL de Cloudinary almacenada en la base de datos
                 List<ArchivoProductoDTO> archivosDTO = producto.getArchivos().stream()
                         .map(archivo -> {
                             try {
-                                // Convertir la ruta local en una URL accesible
-                                String[] pathParts = archivo.getArchivos().getPath().split("/");
-                                String filename = pathParts[pathParts.length - 1];
-                                String url = "http://localhost:8080/imagenes/" + filename;
+                                // Usar la URL de Cloudinary almacenada en la base de datos
+                                String url = archivo.getArchivos().getPath(); // Asegúrate de que 'path' contiene la URL de Cloudinary
                                 return new ArchivoProductoDTO(archivo.getId(), url);
                             } catch (Exception e) {
-                                // Manejar la excepción si ocurre un error al construir la URL
-                                throw new RuntimeException("Error al generar la URL de la imagen", e);
+                                // Manejar la excepción si ocurre un error
+                                throw new RuntimeException("Error al obtener la URL de la imagen desde Cloudinary", e);
                             }
                         })
                         .collect(Collectors.toList());
@@ -156,7 +147,6 @@ public class ProductoService {
             throw new RuntimeException("Error al obtener el producto con ID " + id, e);
         }
     }
-
     public List<ProductoDTO> listarProductos(String createdBy) {
         try {
             List<Producto> productos = productoRepository.findByCreatedBy(createdBy);
@@ -170,9 +160,8 @@ public class ProductoService {
                             producto.getPrecio(),
                             producto.getArchivos().stream()
                                     .map(archivo -> {
-                                        // Convertir la ruta local en una URL accesible
-                                        String filename = archivo.getArchivos().getPath().split("/")[archivo.getArchivos().getPath().split("/").length - 1];
-                                        String url = "http://localhost:8080/imagenes/" + filename;
+                                        // Usar directamente la URL de Cloudinary almacenada en el campo `path`
+                                        String url = archivo.getArchivos().getPath(); // URL completa de Cloudinary
                                         return new ArchivoProductoDTO(archivo.getId(), url);
                                     })
                                     .collect(Collectors.toList())))
@@ -181,6 +170,7 @@ public class ProductoService {
             throw new RuntimeException("Error al listar productos filtrados por 'createdBy'", e);
         }
     }
+
 
     public List<ProductoDTO> listarProductossn() {
         try {
@@ -195,17 +185,17 @@ public class ProductoService {
                             producto.getPrecio(),
                             producto.getArchivos().stream()
                                     .map(archivo -> {
-                                        // Convertir la ruta local en una URL accesible
-                                        String filename = archivo.getArchivos().getPath().split("/")[archivo.getArchivos().getPath().split("/").length - 1];
-                                        String url = "http://localhost:8080/imagenes/" + filename;
+                                        // Utilizar la URL completa de Cloudinary almacenada en `archivo.getArchivos().getPath`
+                                        String url = archivo.getArchivos().getPath(); // URL completa de Cloudinary
                                         return new ArchivoProductoDTO(archivo.getId(), url);
                                     })
                                     .collect(Collectors.toList())))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            throw new RuntimeException("Error al listar productos filtrados por 'createdBy'", e);
+            throw new RuntimeException("Error al listar productos", e);
         }
     }
+
 
 
     // Eliminar un producto

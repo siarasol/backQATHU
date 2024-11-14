@@ -106,9 +106,6 @@ public class PedidoService {
         return new PedidoDetalleDTO(pedido.getId(), totalCarrito, productosDTO);
     }
 
-    @Value("${server.port:8080}")
-    private String serverPort;
-
     public List<PedidoEstadoDTO> obtenerEstadosPedidos() {
         List<Pedido> pedidos = pedidoRepository.findAll();
 
@@ -117,8 +114,8 @@ public class PedidoService {
                     Pago pago = pedido.getPago();
                     Archivos archivo = pago != null ? pago.getArchivo() : null;
 
-                    // Construir URL completa para el archivo
-                    String archivoUrl = archivo != null ? "http://localhost:" + serverPort + "/imagenes/" + archivo.getNombre() : null;
+                    // Usar la URL de Cloudinary directamente desde la base de datos
+                    String archivoUrl = archivo != null ? archivo.getPath() : null; // Asegúrate de que `path` almacena la URL completa de Cloudinary
 
                     return new PedidoEstadoDTO(
                             pedido.getId(),
@@ -130,12 +127,13 @@ public class PedidoService {
                             pago != null ? pago.getCreatedAt() : null,
                             archivo != null ? archivo.getId() : null,
                             archivo != null ? archivo.getNombre() : null,
-                            archivoUrl, // URL de acceso al archivo
+                            archivoUrl, // URL de acceso al archivo desde Cloudinary
                             pedido.getDelivery() != null ? pedido.getDelivery().getEstado() : "SIN DELIVERY"
                     );
                 })
                 .collect(Collectors.toList());
     }
+
 
 
 
