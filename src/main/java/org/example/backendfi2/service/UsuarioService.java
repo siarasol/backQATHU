@@ -2,6 +2,7 @@ package org.example.backendfi2.service;
 import java.util.*;
 import java.time.Year;
 
+import jakarta.mail.MessagingException;
 import org.example.backendfi2.model.Rol;
 import org.example.backendfi2.model.Usuario;
 import org.example.backendfi2.repository.RolRepository;
@@ -27,32 +28,61 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
+
     public List<Usuario> findAllUsuarios() {
         return usuarioRepository.findAll(); // Esto debería devolver todos los usuarios
     }
     public Usuario saveUsuario(Usuario usuario) {
         try {
+            // Encriptar la contraseña antes de guardarla
+            String contraseñaEncriptada = passwordEncoder.encode(usuario.getPassword());
+            usuario.setPassword(contraseñaEncriptada);
+
             // Asignar la fecha actual y activar el usuario
             usuario.setCreatedAt(LocalDateTime.now());
             usuario.setActive(true);
 
             // Asignar un rol al usuario
-            // Aquí puedes buscar un rol específico. Por ejemplo, puedes buscar por ID o por nombre.
-            // Si prefieres buscar por ID:
-            Long rolId = 2L;  // ID del rol que deseas asignar (por ejemplo, Rol de "Usuario")
+            Long rolId = 2L;  // ID del rol "Usuario"
             Rol rol = rolRepository.findById(rolId).orElseThrow(() -> new Exception("Rol no encontrado"));
-            usuario.setRol(rol);  // Asignar el rol al usuario
+            usuario.setRol(rol);
 
             // Guardar el usuario en la base de datos
-            return usuarioRepository.save(usuario);
+            Usuario usuarioGuardado = usuarioRepository.save(usuario);
+
+            // Enviar el correo de bienvenida
+            enviarCorreoBienvenida(usuarioGuardado);
+
+            return usuarioGuardado;
 
         } catch (Exception e) {
-            // Manejo del error
             e.printStackTrace();
             throw new RuntimeException("Error al guardar el usuario: " + e.getMessage());
         }
     }
 
+    private void enviarCorreoBienvenida(Usuario usuario) {
+        String asunto = "Bienvenido a QHATU BOLIVIA";
+        String cuerpo = """
+            <div style="border: 1px solid #cfcfcf; padding: 20px; font-family: Arial, sans-serif;">
+                <h2 style="color: #28a745;">¡Bienvenido a QHATU BOLIVIA!</h2>
+                <p>Estimado %s %s,</p>
+                <p>Nos complace informarte que tu cuenta ha sido creada exitosamente.</p>
+                <p>Ahora puedes iniciar sesión y comenzar a explorar nuestros productos y servicios. Te invitamos a disfrutar de una experiencia de compra única.</p>
+                <p><strong>Gracias por unirte a nosotros,</strong></p>
+                <p>El equipo de QHATU BOLIVIA</p>
+                <p style="color: #6c757d; font-size: small;">Este es un mensaje automático. Por favor, no respondas a este correo.</p>
+            </div>
+            """.formatted(usuario.getNombre(), usuario.getPaterno());
+
+        try {
+            emailService.enviarCorreoPersonalizado(usuario.getEmail(), asunto, cuerpo);
+        } catch (MessagingException e) {
+            System.err.println("Error al enviar el correo de bienvenida: " + e.getMessage());
+        }
+    }
 
     public Map<String, Object> login(String usuario, String password) {
         Map<String, Object> response = new HashMap<>();
