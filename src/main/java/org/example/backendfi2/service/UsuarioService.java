@@ -39,8 +39,17 @@ public class UsuarioService {
     public List<Usuario> findAllUsuarios() {
         return usuarioRepository.findAll(); // Esto debería devolver todos los usuarios
     }
-    public Usuario saveUsuario(Usuario usuario) {
+    public Map<String, Object> saveUsuario(Usuario usuario) {
         try {
+            // Verificar si el correo ya está registrado
+            Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(usuario.getEmail());
+            if (usuarioExistente.isPresent()) {
+                return Map.of(
+                        "success", false,
+                        "message", "El correo ya está registrado. Por favor, usa otro correo."
+                );
+            }
+
             // Encriptar la contraseña antes de guardarla
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
@@ -50,7 +59,10 @@ public class UsuarioService {
 
             // Asignar un rol al usuario
             if (usuario.getRol() == null || usuario.getRol().getId() == null) {
-                throw new Exception("El rol del usuario es obligatorio");
+                return Map.of(
+                        "success", false,
+                        "message", "El rol del usuario es obligatorio"
+                );
             }
             Rol rol = rolRepository.findById(usuario.getRol().getId())
                     .orElseThrow(() -> new Exception("Rol no encontrado"));
@@ -69,11 +81,18 @@ public class UsuarioService {
             // Enviar correo de bienvenida
             enviarCorreoBienvenida(usuarioGuardado);
 
-            return usuarioGuardado;
+            return Map.of(
+                    "success", true,
+                    "message", "Usuario creado exitosamente",
+                    "usuario", usuarioGuardado
+            );
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error al guardar el usuario: " + e.getMessage());
+            return Map.of(
+                    "success", false,
+                    "message", "Error al guardar el usuario: " + e.getMessage()
+            );
         }
     }
 

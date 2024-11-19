@@ -34,13 +34,13 @@ public class UsuarioController {
 
     // Endpoint para registrar un nuevo usuario
     @PostMapping
-    public ResponseEntity<Usuario> createUsuario(@RequestBody Usuario usuario) {
-        try {
-            Usuario nuevoUsuario = usuarioService.saveUsuario(usuario);
-            return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED); // 201 Created
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Map<String, Object>> createUsuario(@RequestBody Usuario usuario) {
+        Map<String, Object> response = usuarioService.saveUsuario(usuario);
+
+        if ((Boolean) response.get("success")) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(response); // 201 Created
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 400 Bad Request
         }
     }
     @PostMapping("/login")
