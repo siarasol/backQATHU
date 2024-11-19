@@ -1,13 +1,11 @@
 package org.example.backendfi2.service;
 
+import org.example.backendfi2.model.*;
 import org.example.backendfi2.service.CloudinaryService;
-import org.example.backendfi2.model.Archivos;
-import org.example.backendfi2.model.ArchivoProducto;
-import org.example.backendfi2.model.Categoria;
-import org.example.backendfi2.model.Producto;
 import org.example.backendfi2.repository.ArchivoProductoRepository;
 import org.example.backendfi2.repository.ArchivoRepository;
 import org.example.backendfi2.repository.CategoriaRepository;
+import org.example.backendfi2.repository.ComunidadRepository;
 
 import org.example.backendfi2.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +38,9 @@ public class ProductoService {
     private CategoriaRepository categoriaRepository;
 
     @Autowired
+    private ComunidadRepository comunidadRepository;
+
+    @Autowired
     private ArchivoRepository archivoRepository;
 
     @Autowired
@@ -54,8 +55,7 @@ public class ProductoService {
 
 
 
-
-    public Producto crearProducto(Producto producto, Long categoriaId, List<MultipartFile> archivos) throws IOException {
+    public Producto crearProducto(Producto producto, Long categoriaId, Long comunidadId, List<MultipartFile> archivos) throws IOException {
         try {
             // Buscar la categoría por ID
             Optional<Categoria> categoria = categoriaRepository.findById(categoriaId);
@@ -63,8 +63,15 @@ public class ProductoService {
                 throw new IllegalArgumentException("Categoría no encontrada");
             }
 
-            // Asignar la categoría al producto
+            // Buscar la comunidad por ID
+            Optional<Comunidad> comunidad = comunidadRepository.findById(comunidadId);
+            if (!comunidad.isPresent()) {
+                throw new IllegalArgumentException("Comunidad no encontrada");
+            }
+
+            // Asignar la categoría y la comunidad al producto
             producto.setCategoria(categoria.get());
+            producto.setComunidad(comunidad.get());
             producto.setCreatedAt(LocalDateTime.now());
 
             // Guardar el producto
@@ -84,7 +91,7 @@ public class ProductoService {
                 archivoGuardado.setCreatedBy(producto.getCreatedBy());
                 archivoGuardado.setCreatedAt(LocalDateTime.now());
                 archivoGuardado.setNombre(archivo.getOriginalFilename());
-                archivoGuardado.setPath(imageUrl); // Guardar la URL pública en el campo `path`
+                archivoGuardado.setPath(imageUrl); // Guardar la URL pública en el campo path
                 archivoGuardado.setTipoArchivo(archivo.getContentType());
                 archivoRepository.save(archivoGuardado);
 
@@ -105,6 +112,7 @@ public class ProductoService {
             throw new RuntimeException("Error al crear el producto", e);
         }
     }
+
 
     // Obtener un producto por ID
     public Optional<ProductoDTO> obtenerProductoPorId(Long id) {
@@ -135,6 +143,7 @@ public class ProductoService {
                         producto.getNombre(),
                         producto.getStock(),
                         producto.getDescripcion(),
+                        producto.getComunidad().getNombre(),
                         producto.getPrecio(),
                         archivosDTO
                 );
@@ -157,6 +166,7 @@ public class ProductoService {
                             producto.getNombre(),
                             producto.getStock(),
                             producto.getDescripcion(),
+                            producto.getComunidad().getNombre(),
                             producto.getPrecio(),
                             producto.getArchivos().stream()
                                     .map(archivo -> {
@@ -182,6 +192,7 @@ public class ProductoService {
                             producto.getNombre(),
                             producto.getStock(),
                             producto.getDescripcion(),
+                            producto.getComunidad().getNombre(),
                             producto.getPrecio(),
                             producto.getArchivos().stream()
                                     .map(archivo -> {

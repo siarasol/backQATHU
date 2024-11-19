@@ -27,6 +27,16 @@ public class ProductoDTO {
 
     private String descripcion;
 
+    public String getComunidad() {
+        return comunidad;
+    }
+
+    public void setComunidad(String comunidad) {
+        this.comunidad = comunidad;
+    }
+
+    private String comunidad;
+
     public BigDecimal getPrecio() {
         return precio;
     }
@@ -39,11 +49,12 @@ public class ProductoDTO {
     private List<ArchivoProductoDTO> archivos; // Usaremos un DTO para archivos también
 
     // Constructor
-    public ProductoDTO(Long id, String nombre,BigInteger Stock,String descripcion, BigDecimal precio,List<ArchivoProductoDTO> archivos) {
+    public ProductoDTO(Long id, String nombre,BigInteger Stock,String descripcion, String nombreComunidad,BigDecimal precio,List<ArchivoProductoDTO> archivos) {
         this.id = id;
         this.nombre = nombre;
         this.stock=Stock;
         this.descripcion=descripcion;
+        this.comunidad=nombreComunidad;
         this.archivos = archivos;
 
         this.precio=precio;

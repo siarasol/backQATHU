@@ -63,6 +63,8 @@ public class Usuario {
     @JoinColumn(name = "id_rol", nullable = false)  // Clave foránea
     private Rol rol;
 
-
+    @ManyToOne
+    @JoinColumn(name = "id_comunidad", nullable = true) // Relación con Comunidad
+    private Comunidad comunidad;
 
 }

@@ -3,8 +3,10 @@ import java.util.*;
 import java.time.Year;
 
 import jakarta.mail.MessagingException;
+import org.example.backendfi2.model.Comunidad;
 import org.example.backendfi2.model.Rol;
 import org.example.backendfi2.model.Usuario;
+import org.example.backendfi2.repository.ComunidadRepository;
 import org.example.backendfi2.repository.RolRepository;
 import org.example.backendfi2.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,28 +33,40 @@ public class UsuarioService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private ComunidadRepository comunidadRepository;
+
     public List<Usuario> findAllUsuarios() {
         return usuarioRepository.findAll(); // Esto debería devolver todos los usuarios
     }
     public Usuario saveUsuario(Usuario usuario) {
         try {
             // Encriptar la contraseña antes de guardarla
-            String contraseñaEncriptada = passwordEncoder.encode(usuario.getPassword());
-            usuario.setPassword(contraseñaEncriptada);
+            usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
             // Asignar la fecha actual y activar el usuario
             usuario.setCreatedAt(LocalDateTime.now());
             usuario.setActive(true);
 
             // Asignar un rol al usuario
-            Long rolId = 2L;  // ID del rol "Usuario"
-            Rol rol = rolRepository.findById(rolId).orElseThrow(() -> new Exception("Rol no encontrado"));
+            if (usuario.getRol() == null || usuario.getRol().getId() == null) {
+                throw new Exception("El rol del usuario es obligatorio");
+            }
+            Rol rol = rolRepository.findById(usuario.getRol().getId())
+                    .orElseThrow(() -> new Exception("Rol no encontrado"));
             usuario.setRol(rol);
+
+            // Asignar comunidad al usuario si se proporciona
+            if (usuario.getComunidad() != null && usuario.getComunidad().getId() != null) {
+                Comunidad comunidad = comunidadRepository.findById(usuario.getComunidad().getId())
+                        .orElseThrow(() -> new Exception("Comunidad no encontrada"));
+                usuario.setComunidad(comunidad);
+            }
 
             // Guardar el usuario en la base de datos
             Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
-            // Enviar el correo de bienvenida
+            // Enviar correo de bienvenida
             enviarCorreoBienvenida(usuarioGuardado);
 
             return usuarioGuardado;
@@ -62,7 +76,6 @@ public class UsuarioService {
             throw new RuntimeException("Error al guardar el usuario: " + e.getMessage());
         }
     }
-
 
 
 

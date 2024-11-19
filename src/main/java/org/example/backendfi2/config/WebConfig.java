@@ -13,14 +13,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("https://front-qhatu-cp0xf32x0-garys-projects-4b811477.vercel.app") // Permite este origen
+                .allowedOrigins("https://front-qhatu-n5xkwg5n8-garys-projects-4b811477.vercel.app") // Permite este origen
+                //.allowedOrigins("http://localhost:4200") // Permite este origen
                 .allowedMethods("GET", "POST", "PUT", "DELETE") // Métodos permitidos
                 .allowedHeaders("*") // Permite todos los headers
                 .allowCredentials(true); // Permite el uso de cookies/credenciales si es necesario
 
         // Configuración CORS para acceso a archivos de imágenes
         registry.addMapping("/imagenes/**")
-                .allowedOrigins("https://front-qhatu-cp0xf32x0-garys-projects-4b811477.vercel.app") // Permite este origen
+                .allowedOrigins("https://front-qhatu-n5xkwg5n8-garys-projects-4b811477.vercel.app") // Permite este origen
+                //.allowedOrigins("http://localhost:4200") // Permite este origen
                 .allowedMethods("GET") // Solo GET para descargar imágenes
                 .allowedHeaders("*")
                 .allowCredentials(true);

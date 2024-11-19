@@ -29,13 +29,14 @@ public class ProductoController {
     public ResponseEntity<ApiResponse> crearProducto(
             @RequestPart("producto") String productoJson,  // Recibe el JSON como String
             @RequestParam Long categoriaId,
+            @RequestParam Long comunidadId,
             @RequestPart("archivos") List<MultipartFile> archivos) {
         try {
             // Deserializar el JSON del producto
             ObjectMapper objectMapper = new ObjectMapper();
             Producto producto = objectMapper.readValue(productoJson, Producto.class);
 
-            Producto productoGuardado = productoService.crearProducto(producto, categoriaId, archivos);
+            Producto productoGuardado = productoService.crearProducto(producto, categoriaId, comunidadId, archivos);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(
                     new ApiResponse(true, "Producto creado con éxito", productoGuardado)

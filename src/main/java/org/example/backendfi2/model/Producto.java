@@ -58,6 +58,10 @@ public class Producto {
     @JsonManagedReference
     private List<ArchivoProducto> archivos;
 
+
+    @ManyToOne
+    @JoinColumn(name = "id_comunidad")
+    private Comunidad comunidad;
     public Producto() {
     }
 }
